@@ -1,3 +1,4 @@
+
 name: Register Vote
 
 on:
@@ -11,6 +12,7 @@ on:
 jobs:
   vote:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v3
 
@@ -19,23 +21,12 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Cast vote
-        run: |
-          echo "Voting for ${{ github.event.inputs.city }}"
-          echo "import json
-city = '${{ github.event.inputs.city }}'
-try:
-  with open('votes.json') as f:
-    data = json.load(f)
-except:
-  data = {}
-data[city] = data.get(city, 0) + 1
-with open('votes.json', 'w') as f:
-  json.dump(data, f, indent=2)
-" > vote.py
-          python3 vote.py
+      - name: Run vote.py
+        run: python3 vote.py
+        env:
+          CITY: ${{ github.event.inputs.city }}
 
-      - name: Commit vote
+      - name: Commit result
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
