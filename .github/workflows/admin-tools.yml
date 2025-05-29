@@ -1,0 +1,41 @@
+
+name: Admin Tools
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Select Admin Action"
+        required: true
+        type: choice
+        options:
+          - generate_new_cities
+          - add_100_votes
+          - announce_winner
+          - reset_all
+
+jobs:
+  admin_job:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Run admin action
+        run: python3 admin.py
+        env:
+          ADMIN_ACTION: ${{ github.event.inputs.action }}
+
+      - name: Commit changes
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .
+          git commit -m "🔧 Admin action: ${{ github.event.inputs.action }}"
+          git push
