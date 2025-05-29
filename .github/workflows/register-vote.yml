@@ -1,0 +1,56 @@
+
+name: Register Vote
+
+on:
+  workflow_dispatch:
+    inputs:
+      city:
+        description: 'City name to vote for'
+        required: true
+        type: string
+
+jobs:
+  vote:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+
+      - name: Register vote
+        run: |
+          CITY="${{ github.event.inputs.city }}"
+          echo "Running vote script for: $CITY"
+          python3 -c "
+import json, os
+
+city = os.getenv('CITY')
+print(f'Voting for: {city}')
+
+file = 'votes.json'
+try:
+  with open(file, 'r') as f:
+    data = json.load(f)
+except:
+  data = {}
+
+data[city] = data.get(city, 0) + 1
+
+with open(file, 'w') as f:
+  json.dump(data, f, indent=2)
+"
+        env:
+          CITY: ${{ github.event.inputs.city }}
+
+      - name: Commit updated votes.json
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add votes.json
+          git commit -m "✅ Vote for ${{ github.event.inputs.city }}"
+          git push
