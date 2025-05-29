@@ -14,30 +14,26 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Vote
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Cast vote
         run: |
-          CITY="${{ github.event.inputs.city }}"
-          echo "Voting for $CITY"
-          python3 -c "
-import json
-import os
-
-city = os.getenv('CITY')
-file = 'votes.json'
-
+          echo "Voting for ${{ github.event.inputs.city }}"
+          echo "import json
+city = '${{ github.event.inputs.city }}'
 try:
-  with open(file) as f:
+  with open('votes.json') as f:
     data = json.load(f)
 except:
   data = {}
-
 data[city] = data.get(city, 0) + 1
-
-with open(file, 'w') as f:
+with open('votes.json', 'w') as f:
   json.dump(data, f, indent=2)
-"
-        env:
-          CITY: ${{ github.event.inputs.city }}
+" > vote.py
+          python3 vote.py
 
       - name: Commit vote
         run: |
