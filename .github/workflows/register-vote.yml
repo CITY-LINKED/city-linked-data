@@ -1,0 +1,54 @@
+
+name: Register Vote
+
+on:
+  workflow_dispatch:
+    inputs:
+      city:
+        description: 'City to vote for'
+        required: true
+        type: string
+
+jobs:
+  update-votes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Update votes.json
+        run: |
+          import json
+          from pathlib import Path
+
+          votes_file = Path("votes.json")
+          city = "${{ github.event.inputs.city }}"
+
+          if votes_file.exists():
+              with votes_file.open("r", encoding="utf-8") as f:
+                  data = json.load(f)
+          else:
+              data = {}
+
+          if city in data:
+              data[city] += 1
+          else:
+              data[city] = 1
+
+          with votes_file.open("w", encoding="utf-8") as f:
+              json.dump(data, f, indent=2)
+
+          print(f"Vote registered for: {city}")
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add votes.json
+          git commit -m "🔼 Voted for ${{ github.event.inputs.city }}"
+          git push
