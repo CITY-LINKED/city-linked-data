@@ -1,0 +1,61 @@
+
+name: Register Vote
+
+on:
+  workflow_dispatch:
+    inputs:
+      city:
+        description: 'City to vote for'
+        required: true
+        type: string
+
+jobs:
+  update-votes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Create update_votes.py script
+        run: |
+          echo "import json
+import os
+
+votes_path = 'votes.json'
+city = os.environ.get('CITY')
+
+if not city:
+    raise Exception('CITY environment variable not provided.')
+
+try:
+    with open(votes_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+except FileNotFoundError:
+    data = {}
+
+data[city] = data.get(city, 0) + 1
+
+with open(votes_path, 'w', encoding='utf-8') as f:
+    json.dump(data, f, indent=2)
+
+print(f'✅ Vote registered for: {city}')
+" > update_votes.py
+
+      - name: Run update_votes.py
+        run: python update_votes.py
+        env:
+          CITY: ${{ github.event.inputs.city }}
+
+      - name: Commit and push updated votes.json
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add votes.json
+          git commit -m "🔼 Voted for ${{ github.event.inputs.city }}"
+          git push
