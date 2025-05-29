@@ -23,27 +23,31 @@ jobs:
 
       - name: Update votes.json
         run: |
-          import json
-          from pathlib import Path
+          echo "import json
+import os
 
-          votes_file = Path("votes.json")
-          city = "${{ github.event.inputs.city }}"
+votes_path = 'votes.json'
+city = os.environ['CITY']
 
-          if votes_file.exists():
-              with votes_file.open("r", encoding="utf-8") as f:
-                  data = json.load(f)
-          else:
-              data = {}
+# Load existing data
+try:
+    with open(votes_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+except FileNotFoundError:
+    data = {}
 
-          if city in data:
-              data[city] += 1
-          else:
-              data[city] = 1
+# Update vote count
+data[city] = data.get(city, 0) + 1
 
-          with votes_file.open("w", encoding="utf-8") as f:
-              json.dump(data, f, indent=2)
+# Write back to file
+with open(votes_path, 'w', encoding='utf-8') as f:
+    json.dump(data, f, indent=2)
+print(f'Vote registered for: {city}')
+" > update_votes.py
 
-          print(f"Vote registered for: {city}")
+          python update_votes.py
+        env:
+          CITY: ${{ github.event.inputs.city }}
 
       - name: Commit and push changes
         run: |
