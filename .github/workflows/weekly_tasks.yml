@@ -1,0 +1,27 @@
+name: Weekly Voting Automation
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'  # Every Monday at 00:00 UTC
+    - cron: '0 0 * * 5'  # Every Friday at 00:00 UTC
+
+jobs:
+  voting_cycle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install pandas
+
+      - name: Run weekly script
+        run: python .github/scripts/weekly_tasks.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EMAIL_RECEIVER: amandio.nunes.211087@gmail.com
