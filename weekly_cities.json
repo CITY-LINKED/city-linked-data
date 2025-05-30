@@ -1,4 +1,10 @@
 {
-  "week": "1",
-  "cities": ["Amsterdam", "Lisbon", "Bangkok", "Rome", "Buenos Aires"]
+  "week": 1,
+  "cities": [
+    "Lisbon",
+    "Amsterdam",
+    "Bangkok",
+    "Buenos Aires",
+    "Rome"
+  ]
 }
