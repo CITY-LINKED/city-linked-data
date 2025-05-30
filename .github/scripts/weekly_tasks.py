@@ -78,7 +78,8 @@ def main():
         summary += f"Next week’s cities: {', '.join(weekly_cities)}\n"
         summary += "To do: send announcement + preview."
 
-        send_email("CITY LINKED Voting Summary", summary, os.environ['EMAIL_RECEIVER'])
+        with open('weekly_summary.txt', 'w') as report:
+        report.write(summary)
 
         save_json(city_db, 'City_Database.json')
         save_json(weekly_cities, 'weekly_cities.json')
