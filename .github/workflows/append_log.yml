@@ -1,0 +1,27 @@
+name: Append to Voting Log
+
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: 'Log entry to append to Voting_Log.txt'
+        required: true
+        type: string
+
+jobs:
+  append-log:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Append log entry to Voting_Log.txt
+        run: |
+          echo "${{ github.event.inputs.message }}" >> Voting_Log.txt
+
+      - name: Commit and push log update
+        run: |
+          git config user.name "CITY-LINKED Bot"
+          git config user.email "actions@github.com"
+          git add Voting_Log.txt
+          git commit -m "📝 Log update"
+          git push
