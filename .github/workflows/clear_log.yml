@@ -1,0 +1,22 @@
+name: Clear Voting Log
+
+on:
+  workflow_dispatch:
+
+jobs:
+  clear-log:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Clear Voting_Log.txt
+        run: |
+          echo "" > Voting_Log.txt
+
+      - name: Commit and push cleared log
+        run: |
+          git config user.name "CITY-LINKED Bot"
+          git config user.email "actions@github.com"
+          git add Voting_Log.txt
+          git commit -m "🧹 Log cleared"
+          git push
