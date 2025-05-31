@@ -1,0 +1,63 @@
+
+name: Process Vote Request
+
+on:
+  push:
+    paths:
+      - vote_request.json
+
+jobs:
+  process-vote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Read and process vote
+        run: |
+          import json, base64, os
+          from pathlib import Path
+
+          request_path = Path("vote_request.json")
+          votes_path = Path("votes.json")
+
+          if request_path.exists():
+              with open(request_path, "r") as f:
+                  request = json.load(f)
+
+              city = request["city"]
+              user = request["user"]
+
+              if votes_path.exists():
+                  with open(votes_path, "r") as f:
+                      votes = json.load(f)
+              else:
+                  votes = {}
+
+              if city not in votes:
+                  votes[city] = 0
+
+              votes[city] += 1
+
+              with open(votes_path, "w") as f:
+                  json.dump(votes, f, indent=2)
+
+              print(f"Vote registered: {city} by {user}")
+
+              # Clear request
+              request_path.unlink()
+          else:
+              print("No vote request found.")
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add votes.json
+          git commit -m "Processed vote request"
+          git push
