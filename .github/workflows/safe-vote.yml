@@ -1,0 +1,35 @@
+name: Submit Vote via Manual Dispatch
+
+on:
+  workflow_dispatch:
+    inputs:
+      city:
+        description: 'City voted for'
+        required: true
+        type: string
+      user:
+        description: 'User ID'
+        required: true
+        type: string
+
+jobs:
+  submit_vote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Create vote_request.json
+        run: |
+          echo "{" > vote_request.json
+          echo "  \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"," >> vote_request.json
+          echo "  \"user\": \"${{ github.event.inputs.user }}\"," >> vote_request.json
+          echo "  \"city\": \"${{ github.event.inputs.city }}\"" >> vote_request.json
+          echo "}" >> vote_request.json
+
+      - name: Commit vote_request.json
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add vote_request.json
+          git commit -m "Manual vote request"
+          git push
