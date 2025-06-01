@@ -1,4 +1,3 @@
-
 name: Register Vote
 
 on:
@@ -6,14 +5,20 @@ on:
     paths:
       - 'vote_request.json'
 
+permissions:
+  contents: write
+
 jobs:
   vote:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.x
-      - name: Run vote processor
-        run: python3 vote.py
+
+      - name: Run vote processor and push results
+        run: |
+          python3 vote.py
