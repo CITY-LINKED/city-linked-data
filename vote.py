@@ -1,33 +1,38 @@
 
 import json
-import os
+from datetime import datetime
 
-# Get the city from environment variable
-city = os.getenv("CITY")
-if not city:
-    raise Exception("No city provided in CITY environment variable.")
+# Load vote request
+with open("vote_request.json", "r") as f:
+    request = json.load(f)
 
-# Determine the correct path for votes.json inside GitHub workspace
-workspace = os.getenv("GITHUB_WORKSPACE", ".")
-votes_path = os.path.join(workspace, "votes.json")
+city = request.get("city")
+user = request.get("user")
+timestamp = request.get("timestamp")
 
-print(f"📍 GITHUB_WORKSPACE: {workspace}")
-print(f"🗳️ Voting for city: {city}")
-print(f"📄 votes.json path: {votes_path}")
+if not city or not user:
+    print("Invalid vote request.")
+    exit(1)
 
-# Load or initialize the votes data
+# Load existing votes
 try:
-    with open(votes_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    with open("votes.json", "r") as f:
+        votes = json.load(f)
 except FileNotFoundError:
-    print("📂 votes.json not found, creating a new one.")
-    data = {}
+    votes = {}
 
-# Update the vote count
-data[city] = data.get(city, 0) + 1
+# Update vote count
+votes[city] = votes.get(city, 0) + 1
 
-# Write the updated data back
-with open(votes_path, "w", encoding="utf-8") as f:
-    json.dump(data, f, indent=2)
+# Save updated votes
+with open("votes.json", "w") as f:
+    json.dump(votes, f, indent=2)
 
-print("✅ Vote successfully recorded.")
+# Log the vote
+log_entry = f"{timestamp} — {user} voted for {city}\n"
+with open("Voting_Log.txt", "a") as log:
+    log.write(log_entry)
+
+# Reset vote_request.json
+with open("vote_request.json", "w") as f:
+    json.dump({}, f)
