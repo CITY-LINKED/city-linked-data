@@ -2,35 +2,18 @@
 name: Register Vote
 
 on:
-  workflow_dispatch:
-    inputs:
-      city:
-        description: "City to vote for"
-        required: true
-        type: string
+  push:
+    paths:
+      - 'vote_request.json'
 
 jobs:
   vote:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
+      - uses: actions/checkout@v3
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
-
-      - name: Run vote script
+          python-version: 3.x
+      - name: Run vote processor
         run: python3 vote.py
-        env:
-          CITY: ${{ github.event.inputs.city }}
-
-      - name: Commit updated votes
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add votes.json
-          git commit -m "🔼 Vote for ${{ github.event.inputs.city }}"
-          git push
