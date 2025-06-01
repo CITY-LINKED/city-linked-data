@@ -1,5 +1,4 @@
-
-name: Process Vote Request
+name: Process Admin Vote
 
 on:
   push:
@@ -9,55 +8,58 @@ on:
 jobs:
   process-vote:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GH_PAT }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      - name: Read and process vote
+      - name: Process vote
         run: |
-          import json, base64, os
-          from pathlib import Path
+          import json
+          from datetime import datetime
 
-          request_path = Path("vote_request.json")
-          votes_path = Path("votes.json")
+          with open("vote_request.json", "r") as f:
+              data = json.load(f)
 
-          if request_path.exists():
-              with open(request_path, "r") as f:
-                  request = json.load(f)
+          city = data.get("city")
+          user = data.get("user")
+          timestamp = data.get("timestamp", datetime.utcnow().isoformat())
 
-              city = request["city"]
-              user = request["user"]
+          if not city:
+              print("No city found in request.")
+              exit(0)
 
-              if votes_path.exists():
-                  with open(votes_path, "r") as f:
-                      votes = json.load(f)
-              else:
-                  votes = {}
+          # Load or create votes.json
+          try:
+              with open("votes.json", "r") as vf:
+                  votes = json.load(vf)
+          except FileNotFoundError:
+              votes = {}
 
-              if city not in votes:
-                  votes[city] = 0
+          votes[city] = votes.get(city, 0) + 1
 
-              votes[city] += 1
+          with open("votes.json", "w") as vf:
+              json.dump(votes, vf, indent=2)
 
-              with open(votes_path, "w") as f:
-                  json.dump(votes, f, indent=2)
+          # Log the vote
+          log_entry = f"{timestamp} - {user} voted for {city}\n"
+          with open("Voting_Log.txt", "a") as lf:
+              lf.write(log_entry)
 
-              print(f"Vote registered: {city} by {user}")
-
-              # Clear request
-              request_path.unlink()
-          else:
-              print("No vote request found.")
+          # Clear vote_request
+          with open("vote_request.json", "w") as f:
+              f.write("{}")
 
       - name: Commit changes
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add votes.json
-          git commit -m "Processed vote request"
+          git config user.name "CITY-LINKED Bot"
+          git config user.email "actions@github.com"
+          git add votes.json vote_request.json Voting_Log.txt
+          git commit -m "Processed admin vote for ${{ github.actor }}"
           git push
