@@ -1,0 +1,50 @@
+name: Submit Vote
+
+on:
+  push:
+    paths:
+      - vote_request.json
+
+jobs:
+  submit-vote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Decode vote request
+        id: parse
+        run: |
+          echo "Parsing vote_request.json..."
+          cat vote_request.json
+          CITY=$(jq -r .city vote_request.json)
+          USER=$(jq -r .user vote_request.json)
+          TS=$(jq -r .timestamp vote_request.json)
+
+          echo "city=$CITY" >> $GITHUB_OUTPUT
+          echo "user=$USER" >> $GITHUB_OUTPUT
+          echo "timestamp=$TS" >> $GITHUB_OUTPUT
+
+      - name: Update votes.json
+        run: |
+          echo "Updating votes.json..."
+          FILE=votes.json
+          CITY="${{ steps.parse.outputs.city }}"
+          mkdir -p $(dirname "$FILE")
+
+          # Create if doesn't exist
+          if [ ! -f "$FILE" ]; then echo "{}" > "$FILE"; fi
+
+          jq --arg city "$CITY" '.[$city] += 1 // 1' "$FILE" > tmp.$$.json && mv tmp.$$.json "$FILE"
+
+      - name: Append to Voting_Log.txt
+        run: |
+          echo "Appending to log..."
+          echo "${{ steps.parse.outputs.timestamp }} | ${{ steps.parse.outputs.user }} | ${{ steps.parse.outputs.city }}" >> Voting_Log.txt
+
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Registered vote for ${{ steps.parse.outputs.city }}"
+          branch: main
+          file_pattern: votes.json Voting_Log.txt
