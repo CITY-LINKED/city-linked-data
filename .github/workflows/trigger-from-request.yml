@@ -1,0 +1,25 @@
+name: Trigger Vote Request
+
+on:
+  push:
+    paths:
+      - request.json
+
+jobs:
+  process-request:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Copy request.json to vote_request.json
+        run: |
+          echo "Copying request.json to vote_request.json..."
+          cp request.json vote_request.json
+
+      - name: Commit and push vote_request.json
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Trigger vote processing"
+          branch: main
+          file_pattern: vote_request.json
